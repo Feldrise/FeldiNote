@@ -4,6 +4,7 @@ using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace FeldiNote.Api.Services
@@ -57,7 +58,7 @@ namespace FeldiNote.Api.Services
             byte[] passwordHash, passwordSalt;
             CreatePasswordHash(password, out passwordHash, out passwordSalt);
 
-            user.PasswordHash = passwordHash;
+            user.PasswordHash = Convert.ToBase64String(passwordHash);
             user.PasswordSalt = passwordSalt;
 
             _users.InsertOne(user);
@@ -70,7 +71,7 @@ namespace FeldiNote.Api.Services
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 return null;
 
-            var user = _users.Find(user => user.Email == username || user.Username == username).First();
+            var user = _users.Find(user => user.Email == username || user.Username == username).FirstOrDefault();
 
             if (user == null)
                 return null;
@@ -81,14 +82,15 @@ namespace FeldiNote.Api.Services
             return user;
         }
 
-        public bool CheckCredential(string id, string password)
+        public bool CheckCredential(string id, string passwordHash)
         {
-            User databaseUser = _users.Find(searchedUser => searchedUser.Id == id).First();
+            User databaseUser = _users.Find(searchedUser => searchedUser.Id == id).FirstOrDefault();
 
             if (databaseUser == null)
                 return false;
 
-            return VerifyPasswordHash(password, databaseUser.PasswordHash, databaseUser.PasswordSalt);
+            //return VerifyPasswordHash(password, databaseUser.PasswordHash, databaseUser.PasswordSalt);
+            return passwordHash == databaseUser.PasswordHash;
         }
 
         private bool UserExist(User checkedUser)
@@ -98,19 +100,21 @@ namespace FeldiNote.Api.Services
             return exist;
         }
 
-        private bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
+        private bool VerifyPasswordHash(string password, string storedHash, byte[] storedSalt)
         {
             if (password == null) throw new ArgumentNullException("password");
             if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Value cannot be empty or whitespace only string.", "password");
-            if (storedHash.Length != 64) throw new ArgumentException("Invalid length of password hash (64 bytes expected).", "passwordHash");
+            //if (storedHash.Length != 64) throw new ArgumentException("Invalid length of password hash (64 bytes expected).", "passwordHash");
             if (storedSalt.Length != 128) throw new ArgumentException("Invalid length of password salt (128 bytes expected).", "passwordHash");
+
+            var storedHashBytes = Convert.FromBase64String(storedHash);
 
             using (var hmac = new System.Security.Cryptography.HMACSHA512(storedSalt))
             {
                 var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
                 for (int i = 0; i < computedHash.Length; i++)
                 {
-                    if (computedHash[i] != storedHash[i]) return false;
+                    if (computedHash[i] != storedHashBytes[i]) return false;
                 }
             }
 

@@ -25,7 +25,7 @@ namespace FeldiNote.Api.Services
         {
             var notesCollection = _database.GetCollection<Note>(collection);
 
-            return notesCollection.Find(note => note.Id == noteId).First();
+            return notesCollection.Find(note => note.Id == noteId).FirstOrDefault();
         }
 
         public async Task<List<Note>> GetNotesAsync(String collection)
