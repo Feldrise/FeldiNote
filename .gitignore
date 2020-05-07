@@ -1,0 +1,9 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/FeldiNote
+/FeldiNote.Api/bin/Debug/netcoreapp3.1
+/FeldiNote.Api/obj
+/FeldiNote.Api/Properties
+*.user
