@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
+using FeldiNote.Api.Helpers;
 using FeldiNote.Api.Services;
 using FeldiNote.Api.Settings;
 using Microsoft.AspNetCore.Builder;
@@ -34,10 +36,12 @@ namespace FeldiNote.Api
                 sp.GetRequiredService<IOptions<MongoSettings>>().Value);
 
             // Services
+            services.AddSingleton<AuthenticationService>();
             services.AddSingleton<NoteService>();
 
-            // Controllers
+            // Other
             services.AddControllers();
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -52,7 +56,10 @@ namespace FeldiNote.Api
 
             app.UseRouting();
 
+
             app.UseAuthorization();
+
+            app.UseMiddleware<AuthenticationMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {

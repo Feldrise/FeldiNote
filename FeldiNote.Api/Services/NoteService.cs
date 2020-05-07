@@ -34,5 +34,14 @@ namespace FeldiNote.Api.Services
 
             return _database.GetCollection<Note>(collection).Find(note => true).ToList(); 
         }
+
+        public Note AddNote(string userId, Note note)
+        {
+            var userNotesCollection = _database.GetCollection<Note>($"notes_{userId}");
+
+            userNotesCollection.InsertOne(note);
+
+            return note;
+        }
     }
 }
