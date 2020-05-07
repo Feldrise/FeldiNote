@@ -65,6 +65,22 @@ namespace FeldiNote.Api.Services
             return user;
         }
 
+        public User Login(string username, string password)
+        {
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+                return null;
+
+            var user = _users.Find(user => user.Email == username || user.Username == username).First();
+
+            if (user == null)
+                return null;
+
+            if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
+                return null;
+
+            return user;
+        }
+
         public bool CheckCredential(string id, string password)
         {
             User databaseUser = _users.Find(searchedUser => searchedUser.Id == id).First();

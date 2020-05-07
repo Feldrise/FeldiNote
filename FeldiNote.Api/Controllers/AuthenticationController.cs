@@ -39,5 +39,16 @@ namespace FeldiNote.Api.Controllers
 
             return Ok();
         }
+
+        [HttpPost("login")]
+        public ActionResult<User> Login([FromBody] UserAuthenticat model)
+        {
+            var user = _authenticationService.Login(model.Username, model.Password);
+
+            if (user == null)
+                return BadRequest("Username or password is incorrect");
+
+            return Ok(user);
+        }
     }
 }

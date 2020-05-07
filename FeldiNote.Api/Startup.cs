@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 
 namespace FeldiNote.Api
 {
@@ -35,6 +36,22 @@ namespace FeldiNote.Api
             services.AddSingleton<IMongoSettings>(sp =>
                 sp.GetRequiredService<IOptions<MongoSettings>>().Value);
 
+            // Swagger
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo{
+                    Version = "v1",
+                    Title = "FeldiNote API",
+                    Description = "A sample API to have cloud based notes",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Victor (Feldrise) DENIS",
+                        Email = "contact@feldrise.com",
+                        Url = new Uri("https://feldrise.com")
+                    }
+                });
+            });
+
             // Services
             services.AddSingleton<AuthenticationService>();
             services.AddSingleton<NoteService>();
@@ -52,10 +69,15 @@ namespace FeldiNote.Api
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseSwagger();
+
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "FeldiNote API V1");
+            });
+
             app.UseHttpsRedirection();
-
             app.UseRouting();
-
 
             app.UseAuthorization();
 
