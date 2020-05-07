@@ -23,17 +23,25 @@ namespace FeldiNote.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Note>>> GetNotesAync()
+        public async Task<ActionResult<List<Note>>> GetNotesAync([FromHeader] string authorization)
         {
+            string encodedUsernamePassword = authorization.Substring("Basic ".Length).Trim();
+            Encoding encoding = Encoding.GetEncoding("iso-8859-1");
+            string idAndPassword = encoding.GetString(Convert.FromBase64String(encodedUsernamePassword));
+
+            int seperatorIndex = idAndPassword.IndexOf(':');
+
+            var userId = idAndPassword.Substring(0, seperatorIndex);
+
             List<Note> publicNotes;
 
             try
             {
-                publicNotes = await _noteService.GetNotesAsync("PublicNotes");
+                publicNotes = await _noteService.GetNotesAsync($"notes_{userId}");
             }
             catch
             {
-                return BadRequest("The collection doesn't exist");
+                return NotFound();
             }
 
             return Ok(publicNotes);
@@ -50,7 +58,7 @@ namespace FeldiNote.Api.Controllers
             }
             catch
             {
-                return BadRequest("The collection doesn't exist");
+                return NotFound();
             }
 
             return Ok(publicNotes);
@@ -65,11 +73,57 @@ namespace FeldiNote.Api.Controllers
 
             int seperatorIndex = idAndPassword.IndexOf(':');
 
-            var id = idAndPassword.Substring(0, seperatorIndex);
+            var userId = idAndPassword.Substring(0, seperatorIndex);
 
-            note = _noteService.AddNote(id, note);
+            note = _noteService.AddNote(userId, note);
 
             return note;
+        }
+
+        [HttpPut("update/{id:length(24)}")]
+        public IActionResult Update(string id, [FromBody] Note noteIn, [FromHeader] string authorization)
+        {
+            string encodedUsernamePassword = authorization.Substring("Basic ".Length).Trim();
+            Encoding encoding = Encoding.GetEncoding("iso-8859-1");
+            string idAndPassword = encoding.GetString(Convert.FromBase64String(encodedUsernamePassword));
+
+            int seperatorIndex = idAndPassword.IndexOf(':');
+
+            var userId = idAndPassword.Substring(0, seperatorIndex);
+
+            var note = _noteService.GetNote($"notes_{userId}", id);
+
+            if (note == null)
+            {
+                return NotFound();
+            }
+
+            _noteService.UpdateNote(userId, noteIn);
+
+            return NoContent();
+        }
+
+        [HttpDelete("remove/{id:length(24)}")]
+        public IActionResult Delete(string id, [FromHeader] string authorization)
+        {
+            string encodedUsernamePassword = authorization.Substring("Basic ".Length).Trim();
+            Encoding encoding = Encoding.GetEncoding("iso-8859-1");
+            string idAndPassword = encoding.GetString(Convert.FromBase64String(encodedUsernamePassword));
+
+            int seperatorIndex = idAndPassword.IndexOf(':');
+
+            var userId = idAndPassword.Substring(0, seperatorIndex);
+
+            var note = _noteService.GetNote($"notes_{userId}", id);
+
+            if (note == null)
+            {
+                return NotFound();
+            }
+
+            _noteService.RemoveNote(userId, note.Id);
+
+            return NoContent();
         }
     }
 }

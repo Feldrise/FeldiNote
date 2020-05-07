@@ -21,6 +21,13 @@ namespace FeldiNote.Api.Services
             _database = client.GetDatabase(settings.DatabaseName);
         }
 
+        public Note GetNote(string collection, string noteId)
+        {
+            var notesCollection = _database.GetCollection<Note>(collection);
+
+            return notesCollection.Find(note => note.Id == noteId).First();
+        }
+
         public async Task<List<Note>> GetNotesAsync(String collection)
         {
             var filter = new BsonDocument("name", collection);
@@ -35,13 +42,27 @@ namespace FeldiNote.Api.Services
             return _database.GetCollection<Note>(collection).Find(note => true).ToList(); 
         }
 
-        public Note AddNote(string userId, Note note)
+        public Note AddNote(string userId, Note noteIn)
         {
             var userNotesCollection = _database.GetCollection<Note>($"notes_{userId}");
 
-            userNotesCollection.InsertOne(note);
+            userNotesCollection.InsertOne(noteIn);
 
-            return note;
+            return noteIn;
+        }
+
+        public void UpdateNote(string userId, Note noteIn)
+        {
+            var userNotesCollection = _database.GetCollection<Note>($"notes_{userId}");
+
+            userNotesCollection.ReplaceOne(note => note.Id == noteIn.Id, noteIn);
+        }
+
+        public void RemoveNote(string userId, string noteId)
+        {
+            var userNotesCollection = _database.GetCollection<Note>($"notes_{userId}");
+
+            userNotesCollection.DeleteOne(note => note.Id == noteId);
         }
     }
 }
